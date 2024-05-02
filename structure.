@@ -1,0 +1,54 @@
+import streamlit as st
+import requests
+import pandas as pd
+
+# Placeholder for storing prompts and ratings
+prompts_db = []
+
+# Function to send prompt to the model API
+def query_model(api_endpoint, prompt):
+    response = requests.post(api_endpoint, json={"prompt": prompt})
+    return response.json()
+
+# Function to save a prompt and its rating
+def save_prompt(prompt, rating):
+    prompts_db.append({"prompt": prompt, "rating": rating})
+
+# Streamlit UI
+def main():
+    st.title("Red-Team Tool for Language Models")
+
+    # Section to create and store prompts
+    st.header("Create and Store Prompts")
+    prompt = st.text_area("Enter your prompt:")
+    if st.button("Save Prompt"):
+        save_prompt(prompt, 0)  # Initial rating is 0
+        st.success("Prompt saved successfully!")
+
+    # Section to setup connection to the model
+    st.header("Setup Model Connection")
+    api_endpoint = st.text_input("Enter model API endpoint:")
+
+    # Section to execute prompt
+    st.header("Execute Prompt")
+    selected_prompt = st.selectbox("Choose a prompt to execute:", prompts_db)
+    if st.button("Execute"):
+        response = query_model(api_endpoint, selected_prompt['prompt'])
+        st.text_area("Response:", value=response['response'], height=300)
+
+    # Section to rate the response
+    rating = st.slider("Rate the response:", 1, 5, 1)
+    if st.button("Submit Rating"):
+        selected_prompt['rating'] = rating
+        st.success("Rating submitted!")
+
+    # Dashboard with statistics
+    st.header("Dashboard")
+    if prompts_db:
+        df = pd.DataFrame(prompts_db)
+        st.write(df.describe())
+    else:
+        st.write("No data available.")
+
+if __name__ == "__main__":
+    main()
